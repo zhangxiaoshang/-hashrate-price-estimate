@@ -126,28 +126,40 @@ export async function getStaticProps() {
   console.log("getStaticProps==============================");
 
   // const response = await fetch("http://localhost:3000/api/data");
-  const response = await fetch(
-    "https://hashrate-price-estimate.vercel.app/api/data"
-  );
 
-  const res = await response.json();
+  try {
+    const response = await fetch(
+      "https://hashrate-price-estimate.vercel.app/api/data"
+    );
 
-  const hashrate = res.hashrate.slice(0, 365).map((item) => item.hashrate);
-  const difficulty = res.difficulty;
-  const statistics_timestamp = res.statistics_timestamp;
+    const res = await response.json();
 
-  console.log({
-    hashrate: hashrate.length,
-    difficulty,
-    statistics_timestamp,
-  });
+    const hashrate = res.hashrate.slice(0, 365).map((item) => item.hashrate);
+    const difficulty = res.difficulty;
+    const statistics_timestamp = res.statistics_timestamp;
 
-  return {
-    props: {
-      hashrate: hashrate,
+    console.log({
+      hashrate: hashrate.length,
       difficulty,
-      statistics_timestamp: statistics_timestamp * 1000,
-    },
-    // revalidate: 60,
-  };
+      statistics_timestamp,
+    });
+
+    return {
+      props: {
+        hashrate: hashrate,
+        difficulty,
+        statistics_timestamp: statistics_timestamp * 1000,
+      },
+      revalidate: 60,
+    };
+  } catch (error) {
+    return {
+      props: {
+        hashrate: [],
+        difficulty: 0,
+        statistics_timestamp: Date.now(),
+      },
+      revalidate: 60,
+    };
+  }
 }
