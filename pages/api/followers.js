@@ -22,8 +22,6 @@ const fn = async (req, res) => {
       : {}
   );
 
-  console.log("browser: ");
-
   const page = await browser.newPage();
   page.setUserAgent(
     "Opera/9.80 (J2ME/MIDP; Opera Mini/5.1.21214/28.2725; U; ru) Presto/2.8.119 Version/11.10"
@@ -42,6 +40,7 @@ const fn = async (req, res) => {
     const url = $("ytm-compact-video-renderer .compact-media-item-image").attr(
       "href"
     );
+    console.log("url:", url);
     const arr = url.split("?v=");
     id = arr[1];
   }
