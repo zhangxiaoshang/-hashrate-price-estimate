@@ -127,7 +127,7 @@ export async function getStaticProps() {
 
   // const response = await fetch("http://localhost:3000/api/data");
   const response = await fetch(
-    "// https://hashrate-price-estimate.vercel.app/"
+    "https://hashrate-price-estimate.vercel.app/api/data"
   );
 
   const res = await response.json();
