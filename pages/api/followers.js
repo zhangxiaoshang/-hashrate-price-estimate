@@ -43,6 +43,8 @@ const fn = async (req, res) => {
     console.log("url:", url);
     const arr = url.split("?v=");
     id = arr[1];
+  } else {
+    console.log("no live");
   }
 
   await browser.close();
