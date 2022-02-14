@@ -145,17 +145,35 @@ export default function Home({ gH, difficulty, wbtcAPR, monthMa3, update_at }) {
 }
 
 export async function getStaticProps() {
-  // return {
-  //   props: {
-  //     gH: 0.34698583947291917,
-  //     statistics_timestamp: "1644796800",
-  //     difficulty: 26690525287.405,
-  //     difficulty_statistics_timestamp: 1644796800000,
-  //     wbtcAPR: 0.0027,
-  //     monthMa3: 42248.26666666666,
-  //     update_at: 1644821398550,
-  //   },
-  // };
+  try {
+    const baseURL =
+      process.env.NODE_ENV === "production"
+        ? "https://hashrate-price-estimate.vercel.app"
+        : "http://localhost:3000";
+    const response1 = await fetch(
+      baseURL.concat("/api/difficulty-and-hashrate")
+    );
+    const difficultyAndHashrate = await response1.json();
+
+    const { monthMa3 } = await (
+      await fetch(baseURL.concat("/api/month-ma3"))
+    ).json();
+    console.log("monthMa3: ", monthMa3);
+
+    return {
+      props: {
+        ...difficultyAndHashrate,
+        wbtcAPR: 0.0027,
+        monthMa3: monthMa3,
+        update_at: Date.now(),
+      },
+    };
+  } catch (error) {
+    return {
+      props: {},
+      revalidate: 10,
+    };
+  }
 
   try {
     const baseURL =
