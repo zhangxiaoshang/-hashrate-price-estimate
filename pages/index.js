@@ -3,7 +3,6 @@ import Head from "next/head";
 import dayjs from "dayjs";
 import "dayjs/locale/zh-cn";
 import relativeTime from "dayjs/plugin/relativeTime";
-import getHashrateData from "../lib/get-data";
 import styles from "../styles/Home.module.css";
 
 dayjs.locale("zh-cn");
@@ -158,7 +157,14 @@ export async function getStaticProps() {
   //   },
   // };
 
-  const data = await getHashrateData();
+  const baseURL =
+    process.env.NODE_ENV === "production"
+      ? "https://hashrate-price-estimate.vercel.app"
+      : "http://localhost:3000";
+  const response = await fetch(baseURL.concat("/api/data"));
+  const data = await response.json();
+
+  console.log("data:", data);
   if (data) {
     return {
       props: {
