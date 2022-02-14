@@ -157,23 +157,28 @@ export async function getStaticProps() {
   //   },
   // };
 
-  const baseURL =
-    process.env.NODE_ENV === "production"
-      ? "https://hashrate-price-estimate.vercel.app"
-      : "http://localhost:3000";
-  const response = await fetch(baseURL.concat("/api/data"));
-  const data = await response.json();
+  try {
+    const baseURL =
+      process.env.NODE_ENV === "production"
+        ? "https://hashrate-price-estimate.vercel.app"
+        : "http://localhost:3000";
+    const response = await fetch(baseURL.concat("/api/data"));
+    const data = await response.json();
 
-  console.log("data:", data);
-  if (data) {
+    console.log("data:", data);
+    if (data) {
+      return {
+        props: {
+          ...data,
+        },
+
+        revalidate: 60,
+      };
+    }
+  } catch (error) {
     return {
-      props: {
-        ...data,
-      },
-
-      revalidate: 60,
+      props: {},
+      revalidate: 10,
     };
   }
-
-  return null;
 }
