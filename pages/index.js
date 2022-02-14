@@ -1,32 +1,22 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import Head from "next/head";
+import dayjs from "dayjs";
+import "dayjs/locale/zh-cn";
+import relativeTime from "dayjs/plugin/relativeTime";
+import getHashrateData from "../lib/get-data";
 import styles from "../styles/Home.module.css";
-import React from "react";
 
-const getGH = (hashrate) => {
-  const hashrate_last7 = hashrate.slice(0, 7);
+dayjs.locale("zh-cn");
+dayjs.extend(relativeTime);
 
-  const hashrate_last7_avg =
-    hashrate_last7.reduce((pre, cur) => pre + cur / 1e18, 0) / 7;
-  const hashrate_last365_avg =
-    hashrate.slice(0, 365).reduce((pre, cur) => pre + cur / 1e18, 0) / 365;
-
-  return (hashrate_last7_avg - hashrate_last365_avg) / hashrate_last365_avg;
-};
-
-export default function Home({ hashrate, difficulty, statistics_timestamp }) {
-  console.log({
-    hashrate,
-    difficulty,
-    statistics_timestamp,
-  });
+export default function Home({ gH, difficulty, wbtcAPR, monthMa3, update_at }) {
   const [data, setData] = useState({
     H: 1e9,
     Cy: 6.3 * 6 * 24 * 365,
-    gH: getGH(hashrate),
+    gH: gH,
     D: difficulty,
-    Pc: 42630,
-    rB: 0.0028,
+    Pc: monthMa3,
+    rB: wbtcAPR,
     P: undefined,
     P2: undefined,
   });
@@ -56,66 +46,99 @@ export default function Home({ hashrate, difficulty, statistics_timestamp }) {
   return (
     <div className={styles.container}>
       <Head>
-        <title>Fetch Twitter Follower</title>
+        <title>算力价格计算器</title>
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
       <main className={styles.main}>
         <h1>算力价格计算器(USDT/T)</h1>
+        <p>
+          上一次更新数据: {dayjs(update_at).fromNow()}
+          <a style={{ cursor: "pointer" }} onClick={() => location.reload()}>
+            (点击更新)
+          </a>
+        </p>
+
         <form onSubmit={handleSubmit}>
           <label>
             H:为单位算力默认1T即10^9
-            <input
-              value={data.H}
-              onChange={(e) => setData({ ...data, H: e.target.value })}
-            />
+            <span className={styles.wrapRight}>
+              <input
+                value={data.H}
+                onChange={(e) => setData({ ...data, H: e.target.value })}
+              />
+              <span>= {data.H / 1e9} T</span>
+            </span>
           </label>
           <label>
             Cy:一年产出固定为6.3*6*24*365（半年期即365换成163）
-            <input
-              value={data.Cy}
-              onChange={(e) => setData({ ...data, Cy: e.target.value })}
-            />
+            <span className={styles.wrapRight}>
+              <input
+                value={data.Cy}
+                onChange={(e) => setData({ ...data, Cy: e.target.value })}
+              />
+              <span>BTC</span>
+            </span>
           </label>
           <label>
             gH:全网算力增速 (过去7天平均 - 过去1年平均) / 过去1年平均
-            <input
-              value={data.gH}
-              onChange={(e) => setData({ ...data, gH: e.target.value })}
-            />
+            <span className={styles.wrapRight}>
+              <input
+                value={data.gH}
+                onChange={(e) => setData({ ...data, gH: e.target.value })}
+              />
+              <span>≈ {Math.round(data.gH * 10000) / 100} %</span>
+            </span>
           </label>
           <label>
             D:难度
-            <input
-              value={data.D}
-              onChange={(e) => setData({ ...data, D: e.target.value })}
-            />
+            <span className={styles.wrapRight}>
+              <input
+                value={data.D}
+                onChange={(e) => setData({ ...data, D: e.target.value })}
+              />
+              <span>≈ {Math.round((data.D / 1e9) * 100) / 100}</span>
+            </span>
           </label>
           <label>
-            Pc:比特币季度价格
-            <input
-              value={data.Pc}
-              onChange={(e) => setData({ ...data, Pc: e.target.value })}
-            />
+            Pc:比特币季度价格(月线MA3)
+            <span className={styles.wrapRight}>
+              <input
+                value={data.Pc}
+                onChange={(e) => setData({ ...data, Pc: e.target.value })}
+              />
+
+              <span>{Math.round(data.Pc * 100) / 100} USDT</span>
+            </span>
           </label>
+
           <label>
             rB: aave中wbtc的APR
-            <input
-              value={data.rB}
-              onChange={(e) => setData({ ...data, rB: e.target.value })}
-            />
+            <span className={styles.wrapRight}>
+              <input
+                value={data.rB}
+                onChange={(e) => setData({ ...data, rB: e.target.value })}
+              />
+              <span>= {data.rB * 100}%</span>
+            </span>
           </label>
 
           <label>
-            P: 一年期算力价格(USDT/T)
-            <input value={data.P} readOnly />
+            P: 一年期算力价格
+            <span className={styles.wrapRight}>
+              <input value={Math.round(data.P * 100) / 100} readOnly />
+              <span>USDT/T</span>
+            </span>
           </label>
           <label>
-            P2: 半年期算力价格(USDT/T)
-            <input value={data.P2} readOnly />
+            P2: 半年期算力价格
+            <span className={styles.wrapRight}>
+              <input value={Math.round(data.P2 * 100) / 100} readOnly />
+              <span>USDT/T</span>
+            </span>
           </label>
 
-          <button>Submit</button>
+          <button>计算</button>
         </form>
       </main>
     </div>
@@ -123,43 +146,28 @@ export default function Home({ hashrate, difficulty, statistics_timestamp }) {
 }
 
 export async function getStaticProps() {
-  console.log("getStaticProps==============================");
+  // return {
+  //   props: {
+  //     gH: 0.34698583947291917,
+  //     statistics_timestamp: "1644796800",
+  //     difficulty: 26690525287.405,
+  //     difficulty_statistics_timestamp: 1644796800000,
+  //     wbtcAPR: 0.0027,
+  //     monthMa3: 42248.26666666666,
+  //     update_at: 1644821398550,
+  //   },
+  // };
 
-  // const response = await fetch("http://localhost:3000/api/data");
-
-  try {
-    const response = await fetch(
-      "https://hashrate-price-estimate.vercel.app/api/data"
-    );
-
-    const res = await response.json();
-
-    const hashrate = res.hashrate.slice(0, 365).map((item) => item.hashrate);
-    const difficulty = res.difficulty;
-    const statistics_timestamp = res.statistics_timestamp;
-
-    console.log({
-      hashrate: hashrate.length,
-      difficulty,
-      statistics_timestamp,
-    });
-
+  const data = await getHashrateData();
+  if (data) {
     return {
       props: {
-        hashrate: hashrate,
-        difficulty,
-        statistics_timestamp: statistics_timestamp * 1000,
+        ...data,
       },
-      revalidate: 60,
-    };
-  } catch (error) {
-    return {
-      props: {
-        hashrate: [],
-        difficulty: 0,
-        statistics_timestamp: Date.now(),
-      },
+
       revalidate: 60,
     };
   }
+
+  return null;
 }
