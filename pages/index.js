@@ -167,6 +167,7 @@ export async function getStaticProps() {
         monthMa3: monthMa3,
         update_at: Date.now(),
       },
+      revalidate: 60,
     };
   } catch (error) {
     return {
