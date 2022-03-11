@@ -5,6 +5,12 @@ const BN = require("bn.js");
 const iPhone = puppeteer.devices["iPhone 6"];
 const pageURL = "https://www.f2pool.com/coin/bitcoin";
 
+const calcHg = (data) => {
+  const sum = data.reduce((prev, cur) => prev + cur.hashrate / 1e3, 0);
+
+  return sum / data.length;
+};
+
 export default async function getHg(req, res) {
   console.log("getHg");
   let Hg;
@@ -21,30 +27,40 @@ export default async function getHg(req, res) {
     );
 
     const page = await browser.newPage();
-    // await page.emulate(iPhone);
+
+    page.on("response", async (response) => {
+      if (response.url() === pageURL) {
+        try {
+          console.log("cached ============");
+
+          const data = await response.json();
+
+          Hg = calcHg(data.data);
+          console.log("Hg:", Hg);
+        } catch (error) {
+          console.log("invalid response");
+        }
+      }
+    });
+
     await page.setViewport({
       width: 1440,
       height: 2600,
     });
     await page.goto(pageURL);
 
-    const finalResponse = await page.waitForResponse((response) => {
-      console.log(response.url());
-      return response.url() === pageURL;
-    });
+    // const finalResponse = await page.waitForResponse((response) => {
+    //   return response.url() === pageURL;
+    // });
 
-    if (finalResponse.url() === pageURL) {
-      const response = await finalResponse.json();
+    // if (finalResponse.url() === pageURL) {
+    //   const response = await finalResponse.json();
+    //   console.log("✅");
 
-      if (response.status === "ok") {
-        const sum = response.data.reduce(
-          (prev, cur) => prev + cur.hashrate / 1e3,
-          0
-        );
-
-        Hg = sum / response.data.length;
-      }
-    }
+    //   if (response.status === "ok") {
+    //     Hg = calcHg(response.data);
+    //   }
+    // }
 
     await browser.close();
 
