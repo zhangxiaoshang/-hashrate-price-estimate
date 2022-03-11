@@ -36,17 +36,13 @@ export default async function getWbtcAPR(req, res) {
       }
     });
 
-    console.time("aaveMarkets");
     // get WBTC APY from https://app.aave.com/#/markets
 
-    console.time("page.goto");
     await page.goto(aaveMarketsPageURL);
 
     console.timeEnd("page.goto");
 
     const selector = ".Markets__mobile--cards";
-
-    console.time("waitForSelector");
 
     await page.waitForSelector(selector);
 

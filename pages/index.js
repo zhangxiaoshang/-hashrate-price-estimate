@@ -8,13 +8,14 @@ import styles from "../styles/Home.module.css";
 dayjs.locale("zh-cn");
 dayjs.extend(relativeTime);
 
-export default function Home({ gH, difficulty, wbtcAPR, monthMa3, update_at }) {
+export default function Home({ gH, Hg, Pc, wbtcAPR, update_at }) {
+  const [loading, setLoading] = useState(false);
   const [data, setData] = useState({
     H: 1e9,
     Cy: 6.3 * 6 * 24 * 365,
-    gH: gH,
-    D: difficulty,
-    Pc: monthMa3,
+    gH,
+    Hg,
+    Pc,
     rB: wbtcAPR,
     P: undefined,
     P2: undefined,
@@ -26,10 +27,15 @@ export default function Home({ gH, difficulty, wbtcAPR, monthMa3, update_at }) {
 
   const handleSubmit = (e) => {
     e && e.preventDefault();
-    const { H, Cy, gH, D, Pc, rB } = data;
-    const P =
-      (Cy / ((1 + rB / 2) * (1 + gH / 2))) * ((H * 600) / (D * 2 ** 32)) * Pc;
+    const { H, Cy, gH, Hg, D, Pc, rB } = data;
+    // const P =
+    //   (Cy / ((1 + rB / 2) * (1 + gH / 2))) * ((H * 600) / (D * 2 ** 32)) * Pc;
 
+    const part1 = (H / Hg) * Cy;
+    const part2 = (1 + gH / 2) * (1 + rB / 2);
+    const P = (part1 / part2) * Pc;
+
+    // P2
     const P2 =
       (Cy / 2 / ((1 + rB / 4) * (1 + gH / 4))) *
       ((H * 600) / (D * 2 ** 32)) *
@@ -45,22 +51,30 @@ export default function Home({ gH, difficulty, wbtcAPR, monthMa3, update_at }) {
   return (
     <div className={styles.container}>
       <Head>
-        <title>算力价格计算器</title>
+        <title>Hashrate Price Calculator</title>
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
       <main className={styles.main}>
-        <h1>算力价格计算器(USDT/T)</h1>
+        <h1>Hashrate Price Calculator</h1>
         <p>
-          上一次更新数据: {dayjs(update_at).fromNow()}
-          <a style={{ cursor: "pointer" }} onClick={() => location.reload()}>
-            (点击更新)
+          last update: {dayjs(update_at).format("YYYY.MM.DD HH:mm:ss")}
+          <a
+            style={{ cursor: "pointer" }}
+            onClick={() => {
+              setLoading(true);
+              setTimeout(() => {
+                location.reload();
+              }, 5000);
+            }}
+          >
+            {loading ? "loading..." : " update"}
           </a>
         </p>
 
         <form onSubmit={handleSubmit}>
           <label>
-            H:为单位算力默认1T即10^9
+            Hash rate of NFTs(Default 1T)
             <span className={styles.wrapRight}>
               <input
                 value={data.H}
@@ -70,7 +84,7 @@ export default function Home({ gH, difficulty, wbtcAPR, monthMa3, update_at }) {
             </span>
           </label>
           <label>
-            Cy:一年产出固定为6.3*6*24*365（半年期即365换成163）
+            Cy: Global mined BTC/year, 6.3*6*24*365 about 331128
             <span className={styles.wrapRight}>
               <input
                 value={data.Cy}
@@ -80,7 +94,7 @@ export default function Home({ gH, difficulty, wbtcAPR, monthMa3, update_at }) {
             </span>
           </label>
           <label>
-            gH:全网算力增速 (过去7天平均 - 过去1年平均) / 过去1年平均
+            gH: Global hash rate growth rate/year
             <span className={styles.wrapRight}>
               <input
                 value={data.gH}
@@ -89,18 +103,25 @@ export default function Home({ gH, difficulty, wbtcAPR, monthMa3, update_at }) {
               <span>≈ {Math.round(data.gH * 10000) / 100} %</span>
             </span>
           </label>
+
           <label>
-            D:难度
+            Hg:Global hash rate
             <span className={styles.wrapRight}>
               <input
-                value={data.D}
-                onChange={(e) => setData({ ...data, D: e.target.value })}
+                value={data.Hg}
+                onChange={(e) =>
+                  setData({
+                    ...data,
+                    Hg: e.target.value,
+                  })
+                }
               />
-              <span>≈ {Math.round((data.D / 1e9) * 100) / 100}</span>
+              <span>TH/s</span>
             </span>
           </label>
+
           <label>
-            Pc:比特币季度价格(月线MA3)
+            Pc: Price of BTC
             <span className={styles.wrapRight}>
               <input
                 value={data.Pc}
@@ -112,7 +133,7 @@ export default function Home({ gH, difficulty, wbtcAPR, monthMa3, update_at }) {
           </label>
 
           <label>
-            rB: aave中wbtc的APR
+            rB: BTC lending interest rate
             <span className={styles.wrapRight}>
               <input
                 value={data.rB}
@@ -123,19 +144,22 @@ export default function Home({ gH, difficulty, wbtcAPR, monthMa3, update_at }) {
           </label>
 
           <label>
-            P: 一年期算力价格
+            P: Price of these NFTs(Default 1T)
             <span className={styles.wrapRight}>
-              <input value={Math.round(data.P * 100) / 100} readOnly />
+              <input
+                value={Math.round(data.P * 100) / 100 || undefined}
+                readOnly
+              />
               <span>USDT/T</span>
             </span>
           </label>
-          <label>
+          {/* <label>
             P2: 半年期算力价格
             <span className={styles.wrapRight}>
               <input value={Math.round(data.P2 * 100) / 100} readOnly />
               <span>USDT/T</span>
             </span>
-          </label>
+          </label> */}
 
           <button>计算</button>
         </form>
@@ -150,50 +174,25 @@ export async function getStaticProps() {
       process.env.NODE_ENV === "production"
         ? "https://hashrate-price-estimate.vercel.app"
         : "http://localhost:3000";
-    const response1 = await fetch(
-      baseURL.concat("/api/difficulty-and-hashrate")
-    );
-    const difficultyAndHashrate = await response1.json();
 
-    const { monthMa3 } = await (
-      await fetch(baseURL.concat("/api/month-ma3"))
-    ).json();
-    console.log("monthMa3: ", monthMa3);
+    const response1 = await fetch(baseURL.concat("/api/getGH"));
+    const response2 = await fetch(baseURL.concat("/api/getHg"));
+
+    const { gH } = await response1.json();
+    const { Hg } = await response2.json();
+
+    const { Pc } = await (await fetch(baseURL.concat("/api/getPc"))).json();
 
     return {
       props: {
-        ...difficultyAndHashrate,
+        gH,
+        Hg,
+        Pc,
         wbtcAPR: 0.0027,
-        monthMa3: monthMa3,
         update_at: Date.now(),
       },
       revalidate: 60,
     };
-  } catch (error) {
-    return {
-      props: {},
-      revalidate: 10,
-    };
-  }
-
-  try {
-    const baseURL =
-      process.env.NODE_ENV === "production"
-        ? "https://hashrate-price-estimate.vercel.app"
-        : "http://localhost:3000";
-    const response = await fetch(baseURL.concat("/api/data"));
-    const data = await response.json();
-
-    console.log("data:", data);
-    if (data) {
-      return {
-        props: {
-          ...data,
-        },
-
-        revalidate: 60,
-      };
-    }
   } catch (error) {
     return {
       props: {},
