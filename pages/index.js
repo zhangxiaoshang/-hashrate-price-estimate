@@ -192,20 +192,21 @@ export async function getStaticProps() {
       fetch(baseURL.concat("/api/getGH")),
       fetch(baseURL.concat("/api/getHg")),
       fetch(baseURL.concat("/api/getPc")),
+      fetch(baseURL.concat("/api/getRB")),
     ]);
 
-    const [{ gH }, { Hg }, { Pc }] = await Promise.all(
+    const [{ gH }, { Hg }, { Pc }, { rB }] = await Promise.all(
       allResponse.map((res) => res.json())
     );
 
-    console.log({ gH, Hg, Pc });
+    console.log({ gH, Hg, Pc, rB });
 
     return {
       props: {
         gH: gH || null,
         Hg: Hg || null,
         Pc: Pc || null,
-        wbtcAPR: 0.0027,
+        wbtcAPR: rB || null,
         update_at: Date.now(),
       },
       revalidate: 60,

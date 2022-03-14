@@ -3,8 +3,9 @@ const chrome = require("chrome-aws-lambda");
 const cheerio = require("cheerio");
 
 const aaveMarketsPageURL = "https://app.aave.com/#/markets";
+const LOG_NAME = "getRB";
 
-export default async function getWbtcAPR(req, res) {
+export default async function getRB(req, res) {
   try {
     const browser = await puppeteer.launch(
       process.env.NODE_ENV === "production"
@@ -16,7 +17,7 @@ export default async function getWbtcAPR(req, res) {
         : {}
     );
 
-    let wbtcAPR;
+    let rB;
 
     const page = await browser.newPage();
     page.setUserAgent(
@@ -36,17 +37,12 @@ export default async function getWbtcAPR(req, res) {
       }
     });
 
-    // get WBTC APY from https://app.aave.com/#/markets
+    console.time(LOG_NAME);
 
-    await page.goto(aaveMarketsPageURL);
-
-    console.timeEnd("page.goto");
+    const gotoAction = page.goto(aaveMarketsPageURL);
 
     const selector = ".Markets__mobile--cards";
-
     await page.waitForSelector(selector);
-
-    console.timeEnd("waitForSelector");
 
     const htmlString = await page.$eval(selector, (el) => el.outerHTML);
     const $ = cheerio.load(htmlString);
@@ -61,21 +57,25 @@ export default async function getWbtcAPR(req, res) {
           ".MarketMobileCard__cards>.MarketMobileCard__card:first-child .ValuePercent > p.ValuePercent__value"
         );
         textNodes.each((i, elem) => {
-          wbtcAPR = wbtcAPR
-            ? wbtcAPR + parseFloat($(elem).text())
+          rB = rB
+            ? rB + parseFloat($(elem).text())
             : parseFloat($(elem).text());
         });
-
-        console.log("wbtcAPR", wbtcAPR);
       }
     });
 
+    await gotoAction;
     browser.close();
-    console.timeEnd("aaveMarkets");
 
-    res.json(wbtcAPR);
+    res.json({
+      rB: rB / 100,
+    });
   } catch (error) {
-    console.log("---", error);
-    res.end(null);
+    console.log(LOG_NAME, error);
+    res.end({
+      rB: 0,
+    });
+  } finally {
+    console.timeEnd(LOG_NAME);
   }
 }
