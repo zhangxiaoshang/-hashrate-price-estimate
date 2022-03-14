@@ -28,21 +28,25 @@ export default async function getHg(req, res) {
 
     const page = await browser.newPage();
 
-    page.on("response", async (response) => {
-      if (response.url() === pageURL) {
-        try {
-          const data = await response.json();
+    await page.setViewport({ width: 1440, height: 2600 });
+    const gotoAction = page.goto(pageURL);
 
-          Hg = calcHg(data.data);
-        } catch (error) {
-          // console.log("invalid response");
+    await page.waitForResponse(async (response) => {
+      try {
+        if (response.url() === pageURL) {
+          const res = await response.json();
+          Hg = calcHg(res.data);
+
+          return res.status === "ok";
         }
+
+        return false;
+      } catch (error) {
+        return false;
       }
     });
 
-    await page.setViewport({ width: 1440, height: 2600 });
-    await page.goto(pageURL);
-
+    await gotoAction;
     await browser.close();
 
     res.json({ Hg });

@@ -194,7 +194,6 @@ export async function getStaticProps() {
       fetch(baseURL.concat("/api/getPc")),
     ]);
 
-    console.log("allResponse:", allResponse);
     const [{ gH }, { Hg }, { Pc }] = await Promise.all(
       allResponse.map((res) => res.json())
     );
