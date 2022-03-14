@@ -188,11 +188,15 @@ export async function getStaticProps() {
         ? "https://hashrate-price-estimate.vercel.app"
         : "http://localhost:3000";
 
-    const { gH } = await (await fetch(baseURL.concat("/api/getGH"))).json();
-    const { Hg } = await (await fetch(baseURL.concat("/api/getHg"))).json();
-    const { Pc } = await (await fetch(baseURL.concat("/api/getPc"))).json();
+    const allResponse = await Promise.all([
+      fetch(baseURL.concat("/api/getGH")),
+      fetch(baseURL.concat("/api/getHg")),
+      fetch(baseURL.concat("/api/getPc")),
+    ]);
 
-    console.log({ gH, Hg, Pc });
+    const [{ gH }, { Hg }, { Pc }] = await Promise.all(
+      allResponse.map((res) => res.json())
+    );
 
     return {
       props: {
@@ -205,6 +209,7 @@ export async function getStaticProps() {
       revalidate: 60,
     };
   } catch (error) {
+    console.log(LOG_TIME, error);
     return {
       props: {},
       revalidate: 10,
