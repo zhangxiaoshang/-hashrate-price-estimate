@@ -153,6 +153,16 @@ export default function Home({ gH, Hg, Pc, wbtcAPR, update_at }) {
               <span>USDT/T</span>
             </span>
           </label>
+          <label>
+            Pm: Price for mining
+            <span className={styles.wrapRight}>
+              <input
+                value={Math.round(data.P * 100 * 0.9) / 100 || undefined}
+                readOnly
+              />
+              <span>USDT/T</span>
+            </span>
+          </label>
           {/* <label>
             P2: 半年期算力价格
             <span className={styles.wrapRight}>
@@ -169,19 +179,20 @@ export default function Home({ gH, Hg, Pc, wbtcAPR, update_at }) {
 }
 
 export async function getStaticProps() {
+  const LOG_TIME = "getStaticProps";
+  console.time(LOG_TIME);
+
   try {
     const baseURL =
       process.env.NODE_ENV === "production"
         ? "https://hashrate-price-estimate.vercel.app"
         : "http://localhost:3000";
 
-    const response1 = await fetch(baseURL.concat("/api/getGH"));
-    const response2 = await fetch(baseURL.concat("/api/getHg"));
-
-    const { gH } = await response1.json();
-    const { Hg } = await response2.json();
-
+    const { gH } = await (await fetch(baseURL.concat("/api/getGH"))).json();
+    const { Hg } = await (await fetch(baseURL.concat("/api/getHg"))).json();
     const { Pc } = await (await fetch(baseURL.concat("/api/getPc"))).json();
+
+    console.log({ gH, Hg, Pc });
 
     return {
       props: {
@@ -198,5 +209,7 @@ export async function getStaticProps() {
       props: {},
       revalidate: 10,
     };
+  } finally {
+    console.timeEnd(LOG_TIME);
   }
 }

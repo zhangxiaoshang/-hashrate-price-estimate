@@ -1,5 +1,9 @@
+const TIME_LOG = "getPc";
+
 export default async function monthMa3(req, res) {
   try {
+    console.time(TIME_LOG);
+
     const response = await fetch(
       "https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1d&limit=30"
     );
@@ -21,15 +25,10 @@ export default async function monthMa3(req, res) {
       }
     );
     const Pc = sum / data.length;
-
-    // res.json({
-    //   avg,
-    //   from: data[0][6],
-    //   to: data[data.length - 1][6],
-    //   size: data.length,
-    // });
     res.json({ Pc });
   } catch (error) {
     res.end(null);
+  } finally {
+    console.timeEnd(TIME_LOG);
   }
 }

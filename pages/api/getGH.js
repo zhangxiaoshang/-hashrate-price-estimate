@@ -4,6 +4,8 @@ const chrome = require("chrome-aws-lambda");
 const hashratePageURL = "https://btc.com/btc/insights-hashrate";
 const hashrateApi = "https://explorer.api.btc.com/stats/insight/hashrate";
 
+const TIME_LOG = "getGH";
+
 const calcGh = (hashrate) => {
   if (!hashrate || !hashrate.length) return 0;
 
@@ -18,7 +20,7 @@ const calcGh = (hashrate) => {
 };
 
 export default async function getGH(req, res) {
-  console.log("getGH");
+  console.time(TIME_LOG);
 
   try {
     const browser = await puppeteer.launch(
@@ -59,7 +61,9 @@ export default async function getGH(req, res) {
       statistics_timestamp,
     });
   } catch (err) {
-    console.log("err:", err);
+    console.log("getGH:", err);
     res.end(null);
+  } finally {
+    console.timeEnd(TIME_LOG);
   }
 }
