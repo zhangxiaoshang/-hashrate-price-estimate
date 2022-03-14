@@ -200,9 +200,9 @@ export async function getStaticProps() {
 
     return {
       props: {
-        gH,
-        Hg,
-        Pc,
+        gH: gH || undefined,
+        Hg: Hg || undefined,
+        Pc: Pc || undefined,
         wbtcAPR: 0.0027,
         update_at: Date.now(),
       },
