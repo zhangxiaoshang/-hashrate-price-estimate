@@ -198,6 +198,8 @@ export async function getStaticProps() {
       allResponse.map((res) => res.json())
     );
 
+    console.log({ gH, Hg, Pc });
+
     return {
       props: {
         gH: gH || undefined,
