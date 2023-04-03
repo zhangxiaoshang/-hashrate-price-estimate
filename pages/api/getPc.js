@@ -47,6 +47,7 @@ export default async function monthMa3(req, res) {
       "https://www.okx.com/api/v5/market/candles?instId=BTC-USDT&bar=1D&limit=31"
     );
     const data = await response.json();
+    console.log("data", data);
 
     if (data.code === "0") {
       const klines = data.data.filter((item) => item.confirm === "1"); // k线已完结
